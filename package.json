@@ -1,0 +1,26 @@
+{
+    "name": "theToyRobot",
+    "version": "1.0.0",
+    "description": "The Toy Robot is a test task for the Lookahead.com.au company.",
+    "main": "index.js",
+    "scripts": {
+        "test": "protractor"
+    },
+    "keywords": [
+        "lookahead.com.au",
+        "test",
+        "task",
+        "toy",
+        "robot",
+        "game"
+    ],
+    "bin": {
+        "robo": "index.js"
+    },
+    "author": "Sergey Reznikov",
+    "license": "ISC",
+    "dependencies": {
+        "commander": "^2.8.1",
+        "prompt": "^0.2.14"
+    }
+}

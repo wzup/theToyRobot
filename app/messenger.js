@@ -2,39 +2,88 @@
 
 module.exports = Messenger;
 
+/**
+ * Our Messenger abstraction that deals with creating messages.
+ * It is a dependancy of our Robot.
+ * It is tested in /tests/spec/messengerSpec.js
+ */
 function Messenger(config) {
     this._config = config || {};
 }
 
+/**
+ * Object.assign() polyfill.
+ * If our Node.js engine doesn't implement ECMAScript 2015 (ES6) Object.assign() method.
+ * For the sake of simplicity we define it inline here.
+ */
+if (!Object.assign) {
+    Object.defineProperty(Object, 'assign', {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value: function(target) {
+            'use strict';
+            if (target === undefined || target === null) {
+                throw new TypeError('Cannot convert first argument to object');
+            }
+
+            var to = Object(target);
+            for (var i = 1; i < arguments.length; i++) {
+                var nextSource = arguments[i];
+                if (nextSource === undefined || nextSource === null) {
+                    continue;
+                }
+                nextSource = Object(nextSource);
+
+                var keysArray = Object.keys(nextSource);
+                for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+                    var nextKey = keysArray[nextIndex];
+                    var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+                    if (desc !== undefined && desc.enumerable) {
+                        to[nextKey] = nextSource[nextKey];
+                    }
+                }
+            }
+            return to;
+        }
+    });
+}
+
 var prototype = {
 
-    getMessage: function(argv) {
-        if (arguments.length === 0) {
+    /**
+     * Instruction for a Messenger what message is needed
+     * @param  {object} oData - {msg: 'aMessageKey', x: 10, y: 20, f: 'north'}
+     * @return {string} - parsed message
+     */
+    getMessage: function(oData) {
+        /**
+         * If no any parameters provided.
+         * Return a default welcome message.
+         */
+        if (!oData) {
             return this._config.oMsgs['welcome'];
         }
         /**
-         * If there is no such a message key in our config.
-         * Return default welcome message
+         * If there is no such a message-key in our oMsgs config.
+         * Return a default welcome message.
          */
-        if (!this._config.oMsgs[arguments[0]]) {
+        if (!this._config.oMsgs[oData.msg]) {
             return this._config.oMsgs['welcome'];
         }
-        return this._constructMessage(arguments);
+        return this._constructMessage(oData);
     },
 
-    _constructMessage: function(argv) {
-        var _arguments = Array.prototype.slice.call(arguments[0]);
-
-        var key = _arguments[0],
-            args, str;
-
-        if (_arguments.length > 1) {
-            args = _arguments.slice(1);
-        } else {
-            args = this._config.oSubs;
-        }
-        str = this._config.oMsgs[key].replace(/{(\w+)}/g, function(match, p) {
-            return args[p];
+    /**
+     * Parses message string from oMsgs config by replacing {keys}
+     * @param  {[type]} oData [description]
+     * @return {[type]}       [description]
+     */
+    _constructMessage: function(oData) {
+        var oCombined = Object.assign({}, oData, this._config.oSubs),
+            str;
+        str = this._config.oMsgs[oCombined.msg].replace(/{(\w+)}/g, function(match, p) {
+            return oCombined[p];
         });
         return str;
     }
@@ -42,6 +91,3 @@ var prototype = {
 
 Messenger.prototype = Object.create(prototype);
 Messenger.prototype.constructor = Messenger;
-
-
-{msg: 'noInitialCommand', }

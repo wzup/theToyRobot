@@ -11,11 +11,11 @@ var config = require('./../../app/config');
 
 
 describe('The Messenger', function() {
-    var messenger, x, y, f;
+    var messenger, x, y, f, s;
 
     beforeAll(function() {
         messenger = new Messenger(config.messenger),
-            x = 1, y = 2, f = 'south';
+            x = 1, y = 2, f = 'south', s = 'sake';
     });
 
     /**
@@ -24,7 +24,9 @@ describe('The Messenger', function() {
      * Bellow it a better loop solution.
      */
     it('shoud output correct noInitialCommand message', function() {
-        expect(messenger.getMessage('noInitialCommand')).toEqual(config.messenger.oMsgs['noInitialCommand']);
+        expect(messenger.getMessage({
+            msg: 'noInitialCommand'
+        })).toEqual(config.messenger.oMsgs['noInitialCommand']);
     });
 
     it('shoud output correct default welcome message', function() {
@@ -32,11 +34,24 @@ describe('The Messenger', function() {
     });
 
     it('shoud output correct default welcome message', function() {
-        expect(messenger.getMessage('FooBlaBla')).toEqual(config.messenger.oMsgs['welcome']);
+        expect(messenger.getMessage({
+            msg: 'FooBlaBla'
+        })).toEqual(config.messenger.oMsgs['welcome']);
     });
 
     it('combinedMsg', function() {
-        expect(messenger.getMessage(combinedMsg, 10, 20)).toEqual(config.messenger.oMsgs['combinedMsg'])
+        expect(messenger.getMessage({
+            msg: 'someCombinedMsg',
+            x: x,
+            y: y,
+            s: s
+        })).toEqual(messenger._constructMessage({
+            msg: 'someCombinedMsg',
+            x: x,
+            y: y,
+            f: f,
+            s: s
+        }))
     })
 
     /**
@@ -46,12 +61,32 @@ describe('The Messenger', function() {
      */
     function testItsInLoop(key) {
         it(['shoud output correct', key, 'message'].join(' '), function() {
-            for (var key in config.messenger.oMsgs) {
-                if (key == 'robotPosition') {
-                    expect(messenger.getMessage(key, x, y, f)).toEqual(messenger._constructMessage([key, x, y, f]));
-                } else
-                    expect(messenger.getMessage(key)).toEqual(messenger._constructMessage([key]));
-            }
+            // for (var key in config.messenger.oMsgs) {
+            //     expect(messenger.getMessage({
+            //         msg: key,
+            //         x: x,
+            //         y: y,
+            //         f: f
+            //     })).toEqual(messenger._constructMessage({
+            //         msg: key,
+            //         x: x,
+            //         y: y,
+            //         f: f
+            //     }));
+            // }
+            // console.log('== key ==: ', key);
+                expect(messenger.getMessage({
+                    msg: key,
+                    x: x,
+                    y: y,
+                    f: f
+                })).toEqual(messenger._constructMessage({
+                    msg: key,
+                    x: x,
+                    y: y,
+                    f: f
+                }));
+
         });
     }
 
@@ -59,6 +94,7 @@ describe('The Messenger', function() {
      * A loop by itself
      */
     for (var key in config.messenger.oMsgs) {
+        // console.log('== key ==: ', key);
         testItsInLoop(key);
     }
 });

@@ -71,6 +71,7 @@ function Robot() {
     };
 
     this.place = function(x, y, f) {
+        var f = f.toUpperCase();
         if (x < 0 || y < 0) {
             return this.report(oMsgs.noNegativeCoordinates);
         }

@@ -1,157 +1,273 @@
-// #! /usr/bin/env node
-
 'use strict';
 
 var config = require('./config');
-// var playground = new(require('./playground'))(config.playground);
-var playground = new(require('./playground'))();
 module.exports = Robot;
 
-debugger;
 
 /**
- * Класс Robot
+ * Class Robot
  */
-function Robot() {
+function Robot(config, playgroud, messenger) {
 
-    /**
-     * Возможные команды роботу
-     * @type {Array}
-     */
-    var aCommands = ['place', 'move', 'left', 'right', 'report'];
-    var aDirections = ['north', 'east', 'south', 'west'];
-    var aInitialCommands = [aCommands[0]]; // place
-    var isFirstStepMade = false;
-    // f - num, индекс слова в массиве, не слово!
-    var oCurrentRobotPosition = {
-        x: 0,
-        y: 0,
-        f: 0
-    };
-    var oMsgs = {
-        noInitialCommand: 'Warning! You didn\'t placed a robot first. Type "PLACE X, Y, F" to position a robot on the playground.',
-        wrongPlace: 'Warning! You cannot place the robot in that square, it can fall.',
-        wrondDirection: ['Error! No such a direction. Available directions are: ', aDirections.join(', ').toUpperCase(), '.'].join(''),
-        robotPosition: 'Robot\'s position is: ',
-        noNegativeCoordinates: 'Error! No negative X or Y allowed. Try again.',
-        wrongMove: 'Warning! You cannot move the robot that way, it can fall.'
-    };
-
-    /**
-     * Проверить, есть ли такая команда
-     * @return {Boolean} есть команда - тру, нету - фолс
-     */
-    function isCommandValid(sCommand) {
-        // TODO: проверка типа, что sCommand - строка
-        return aCommands.indexOf(sCommand) !== -1;
-    }
-
-    /**
-     * Проверить, есть ли такое направление
-     * @param  {[string]}  sDirection - north, east, south, west
-     * @return {Boolean} - true | false
-     */
-    function isDirectionValid(sDirection) {
-        // TODO: проверка типа, что sDirection - строка
-        return aDirections.indexOf(sDirection) !== -1;
-    }
-
-    /**
-     * LEFT and RIGHT will rotate the robot 90 degrees in the specified direction
-     * without changing the position of the robot.
-     * Т.е. только FACE поменять
-     * @return {[type]} [description]
-     */
-    this.left = function() {
-        oCurrentRobotPosition.f = (oCurrentRobotPosition.f - 1) < 0 ? 3 : oCurrentRobotPosition.f - 1;
-    };
-
-    this.right = function() {
-        oCurrentRobotPosition.f = (oCurrentRobotPosition.f + 1) > 3 ? 0 : oCurrentRobotPosition.f + 1;
-    };
-
-    this.place = function(x, y, f) {
-        var f = f.toUpperCase();
-        if (x < 0 || y < 0) {
-            return this.report(oMsgs.noNegativeCoordinates);
-        }
-        if (isEndOfPlayground(x, y)) {
-            return this.report(oMsgs.wrongPlace);
-        }
-        if (!isDirectionValid(f)) {
-            return this.report(oMsgs.wrondDirection);
-        }
-        setRobotPosition(x, y, f);
-        if (!isFirstStepMade)
-            isFirstStepMade = true;
-        return true;
-    };
-
-    this.move = function() {
-        var x, y, f;
-        if (!isFirstStepMade) {
-            return this.report(oMsgs.noInitialCommand);
-        }
-        // TODO: ПОСЧИТАТЬ СЛЕДУЮЩИЙ ШАГ
-        // если шагнет в конец поля, сообщение и выход
-        // если все ок, обновить position
-        f = oCurrentRobotPosition.f;
-        switch(f) {
-            case aDirections[0]: // north
-                ++y;
-            break;
-            case aDirections[1]: // east
-                ++x;
-            break;
-            case aDirections[2]: // south
-                --y
-            break;
-            case aDirections[3]: // west
-                --x;
-            break;
-        }
-        if (isEndOfPlayground(x, y)) {
-            return this.report(oMsgs.wrongMove);
-        }
-        setRobotPosition(x, y, f);
-        return true;
-    };
-
-    this.report = function(msg) {
-        var msg = msg;
-        if (!msg) {
-            // console.info(oMsgs.robotPosition,
-            //     oCurrentRobotPosition.x,
-            //     oCurrentRobotPosition.y,
-            //     aDirections[oCurrentRobotPosition.f].toUpperCase());
-            msg = [oMsgs.robotPosition,
-                oCurrentRobotPosition.x,
-                oCurrentRobotPosition.y,
-                aDirections[oCurrentRobotPosition.f].toUpperCase()
-            ].join(' ');
-        } else {
-            // console.log(oMsgs.noNegativeCoordinates);
-            msg = msg;
-        }
-        return msg;
-    }
-
-    function setRobotPosition(x, y, f) {
-        oCurrentRobotPosition.x = x;
-        oCurrentRobotPosition.y = y;
-
-        // TODO: возможно слово (north, south, т.д.) переделывать на число ЗДЕСЬ,
-        // а не в .place или .move
-        oCurrentRobotPosition.f = aDirections.indexOf(f.toLowerCase());
-    }
-
-    function getRobotPosition() {}
-
-    /**
-     * Проверка, что не конец игрового поля. Что робот не упадет.
-     * @return {Boolean} true | false
-     */
-    function isEndOfPlayground(x, y) {
-        return playground.isEndOfPlayground(x, y);
-    }
+    this._config = config,
+        this._playground = playgroud,
+        this._messenger = messenger,
+        this._isFirstStepMade = false,
+        // We store FACE as an int,
+        // not as a string (such as 'north', 'east', etc.)
+        // int references index in a config.aDirections array
+        // ['NORTH', 'EAST', 'SOUTH', 'WEST']
+        this._oCurrentPosition = {
+            x: undefined,
+            y: undefined,
+            f: undefined
+        };
 }
+
+var prototype = {
+    place: function(x, y, f) {
+        if (!f) {
+            return this.report({
+                msg: 'noFace'
+            })
+        }
+        var _f = f.toUpperCase(),
+            _x = parseInt(x),
+            _y = parseInt(y);
+        // Only either INT or Strings that can parsed to INT
+        // are accepted as coordinatres
+        if (!Number.isInteger(_x) || !Number.isInteger(_y)) {
+            return this.report({
+                msg: 'nonIntCoordinates'
+            });
+        }
+        if (_x < 0 || _y < 0) {
+            return this.report({
+                msg: 'noNegativeCoordinates'
+            });
+        }
+        if (this._isOutOfPlayground(_x, _y)) {
+            return this.report({
+                msg: 'wrongPlace'
+            });
+        }
+        if (!this._isDirectionValid(_f)) {
+            return this.report({
+                msg: 'wrondDirection'
+            });
+        }
+        this._setRobotPosition(_x, _y, _f);
+        if (!this._isFirstStepMade)
+            this._isFirstStepMade = true;
+        return true;
+    },
+    move: function() {
+        var x, y, sF, firstStep;
+        if (!this._isFirstStepMade) {
+            return this.report({
+                msg: 'noInitialCommand'
+            });
+        }
+        sF = this._config.aDirections[this._oCurrentPosition.f].toUpperCase();
+        x = this._oCurrentPosition.x;
+        y = this._oCurrentPosition.y;
+        switch (sF) {
+            case this._config.aDirections[0]: // north
+                ++y;
+                break;
+            case this._config.aDirections[1]: // east
+                ++x;
+                break;
+            case this._config.aDirections[2]: // south
+                --y
+                break;
+            case this._config.aDirections[3]: // west
+                --x;
+                break;
+        }
+        if (this._isOutOfPlayground(x, y)) {
+            return this.report({
+                msg: 'wrongMove'
+            });
+        }
+        this._setRobotPosition(x, y, sF);
+        return true;
+        /**
+         * сделать проверку установки this._isFirstStepMade.
+         * Сначала типа false, после PLACE становится true
+         *
+         * Изменить this._oCurrentPosition на undefined для всего,
+         * покв не будет сделан первый PLACE. После него появляются
+         * реальные доступные координаты
+         */
+    },
+    left: function() {
+        if (!this._isFirstStepMade) {
+            return this.report({
+                msg: 'noInitialCommand'
+            });
+        }
+        this._oCurrentPosition.f =
+            (this._oCurrentPosition.f - 1) < 0 ?
+            3 : this._oCurrentPosition.f - 1;
+    },
+    right: function() {
+        if (!this._isFirstStepMade) {
+            return this.report({
+                msg: 'noInitialCommand'
+            });
+        }
+        this._oCurrentPosition.f =
+            (this._oCurrentPosition.f + 1) > 3 ?
+            0 : this._oCurrentPosition.f + 1;
+    },
+    report: function(msgObj) {
+        // Call .report() without any parameters.
+        if (!msgObj) {
+            var oPosition = this._getRobotPosition();
+
+            // Very beginning, no any PLACE yet, coords are undefined
+            // return a messange "PLACE a robot to begin", not coords
+            if (oPosition.x == undefined &&
+                oPosition.y == undefined &&
+                oPosition.f == undefined) {
+                return this._messenger.getMessage({
+                    msg: 'placeRobotFirst'
+                });
+                // coords are defined, return them
+            } else {
+                return this._messenger.getMessage({
+                    msg: 'robotPosition',
+                    x: oPosition.x,
+                    y: oPosition.y,
+                    f: oPosition.f
+                });
+            }
+        } else
+            return this._messenger.getMessage(msgObj);
+    },
+    _isCommandValid: function() {},
+    _isDirectionValid: function(face) {
+        return this._config.aDirections.indexOf(face) !== -1;
+    },
+    _setRobotPosition: function(x, y, f) {
+        this._oCurrentPosition.x = x,
+            this._oCurrentPosition.y = y,
+            this._oCurrentPosition.f = this._config
+            .aDirections.indexOf(f.toUpperCase());
+    },
+    _isOutOfPlayground: function(x, y) {
+        return this._playground.isOutOfPlayground(x, y);
+    },
+    _getRobotPosition: function() {
+        return {
+            x: this._oCurrentPosition.x,
+            y: this._oCurrentPosition.y,
+            f: this._config.aDirections[this._oCurrentPosition.f]
+        }
+    },
+
+    /**
+     * These methods are only for the sake of testing
+     */
+    _getIsFirstStepMade: function() {
+        return this._isFirstStepMade;
+    },
+    _isFirstStepMadeFunc: function() {
+        if (!this._isFirstStepMade) {
+            return this.report({
+                msg: 'noInitialCommand'
+            });
+        } else
+            return true;
+    },
+    _setIsFirstStepMade: function(val) {
+        this._isFirstStepMade = val;
+    }
+
+}
+
+Robot.prototype = Object.create(prototype);
+Robot.prototype.constructor = Robot;
+
+/**
+ * Проверить, есть ли такая команда
+ * @return {Boolean} есть команда - тру, нету - фолс
+ */
+// Robot.prototype.isCommandValid = function(sCommand) {
+//     // TODO: проверка типа, что sCommand - строка
+//     return aCommands.indexOf(sCommand) !== -1;
+// };
+
+/**
+ * Проверить, есть ли такое направление
+ * @param  {[string]}  sDirection - north, east, south, west
+ * @return {Boolean} - true | false
+ */
+// function isDirectionValid(sDirection) {
+//     // TODO: проверка типа, что sDirection - строка
+//     return aDirections.indexOf(sDirection) !== -1;
+// }
+
+/**
+ * LEFT and RIGHT will rotate the robot 90 degrees in the specified direction
+ * without changing the position of the robot.
+ * Т.е. только FACE поменять
+ * @return {[type]} [description]
+ */
+// Robot.prototype.left = function() {
+//     oCurrentRobotPosition.f = (oCurrentRobotPosition.f - 1) < 0 ? 3 : oCurrentRobotPosition.f - 1;
+// };
+// Robot.prototype.right = function() {
+//     oCurrentRobotPosition.f = (oCurrentRobotPosition.f + 1) > 3 ? 0 : oCurrentRobotPosition.f + 1;
+// };
+// Robot.prototype.place = function(x, y, f) {
+//     // TODO: проверка, что робот ставится на игровое поле, а не куда-то за поле
+//     if (isEndOfPlayground(x, y, f)) {
+//         this.report(oMsgs.wrongPlace);
+//         return;
+//     }
+//     if (!isDirectionValid(f)) {
+//         this.report(oMsgs.wrondDirection);
+//         return;
+//     }
+//     updateRobotPosition(x, y, aDirections.indexOf(f));
+// };
+// Robot.prototype.move = function() {
+//     if (!isFirstStepMade) {
+//         this.report(oMsgs.noInitialCommand);
+//         return;
+//     }
+//     // if (!isFirstStepMade && '')
+// };
+
+// Robot.prototype.report = function(msg) {
+//     console.info(msg);
+// };
+
+// Robot.prototype.setRobotPosition = function(x, y, f) {
+//     oCurrentRobotPosition.x = x;
+//     oCurrentRobotPosition.y = y;
+
+//     // TODO: возможно слово (north, south, т.д.) переделывать на число ЗДЕСЬ,
+//     // а не в .move
+//     oCurrentRobotPosition.f = f;
+// }
+
+// Robot.prototype.getRobotPosition = function() {
+//     return oCurrentRobotPosition;
+// };
+
+// Robot.prototype.oMsgs = {
+//     noInitialCommand: 'Warning! You didn\'t placed a robot first. Use PLACE X, Y, F to position a robot on a playgroud.',
+//     wrongPlace: 'Warning! You cannot place the robot in that square, it can fall',
+//     wrondDirection: ['Error! No such a direction. Available direction are: ', aDirections.join(', ').toUpperCase()].join(''),
+// };
+
+
+
+/**
+ * Проверка, что не конец игрового поля. Что робот не упадет.
+ * @return {Boolean} true | false
+ */
+// Robot.prototype.isEndOfPlayground = function() {}

@@ -12,9 +12,11 @@ function Messenger(config) {
 }
 
 /**
- * Object.assign() polyfill.
- * If our Node.js engine doesn't implement ECMAScript 2015 (ES6) Object.assign() method.
+ * Object.assign() polyfill If our Node.js engine doesn't implement
+ * ECMAScript 2015 (ES6) Object.assign() method.
  * For the sake of simplicity we define it inline here.
+ * Taken from
+ * https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
  */
 if (!Object.assign) {
     Object.defineProperty(Object, 'assign', {
@@ -82,9 +84,11 @@ var prototype = {
     _constructMessage: function(oData) {
         var oCombined = Object.assign({}, oData, this._config.oSubs),
             str;
-        str = this._config.oMsgs[oCombined.msg].replace(/{(\w+)}/g, function(match, p) {
-            return oCombined[p];
-        });
+        str = this._config.oMsgs[oCombined.msg].replace(
+            /{(\w+)}/g,
+            function(match, p) {
+                return oCombined[p];
+            });
         return str;
     }
 };

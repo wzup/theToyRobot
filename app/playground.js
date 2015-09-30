@@ -8,7 +8,6 @@ function Playgroud(config) {
 
 var prototype = {
     isOutOfPlayground: function(x, y) {
-        console.log('== x, y ==: ', x, y);
         if (
             (x > (this._config.startPointX + (this._config.lengthX - 1))) ||
             (x < this._config.startPointX) ||

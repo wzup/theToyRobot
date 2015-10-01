@@ -15,12 +15,8 @@
         "game"
     ],
     "bin": {
-        "robo": "index.js"
+        "robo": "start.js"
     },
     "author": "Sergey Reznikov",
-    "license": "ISC",
-    "dependencies": {
-        "commander": "^2.8.1",
-        "prompt": "^0.2.14"
-    }
+    "license": "ISC"
 }

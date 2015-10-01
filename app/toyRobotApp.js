@@ -1,30 +1,54 @@
-#! /usr/bin/env node
+'use strict';
 
-
+/**
+ * "The Toy Robot" app.
+ * It is a mudule.
+ */
 var os = require("os"), // to have platform independent EOL
     stdin = process.stdin,
     stdout = process.stdout,
     stderr = process.stderr,
-    robot = require('./app/robotFactory.js'), // a robot instance
+    robot = require('./robotFactory'), // a robot instance
     EOL = os.EOL,
     fs = require('fs'), // to check if a file exists and is readable and to create a stream
     readline = require('readline'), // to read commands from a file
     rl,
-    argv; // for cli arguments, particularly to get a file path
+    argv, // for cli arguments, particularly to get a file path
+    messenger = robot.getMessenger(); // to create and send messages to user
 
 stdin.setEncoding('utf8');
 process.title = "== The Toy Robot =="; // sets a terminal title
-stdout.write('Tell the robot your first command. Begin by placing it on the playground, like PLACE X, Y, F.' + EOL);
 
-// If argv is provided we assume it is a file to read commands from
 argv = process.argv.slice(2);
+
+
+stdin.on('data', function(data) {
+    var res, _data = data.trim();
+    if (_data.match(/(q|quit|exit)/i))
+        process.exit();
+
+    res = doAction(_data);
+    if (res instanceof Error) {
+        stderr.write(res.message + EOL + '> ');
+    } else if (typeof res == 'string') {
+        stdout.write(res + EOL + '> ');
+    }
+    else {
+        stdout.write('> ');
+    }
+});
+
+
 if (argv.length) {
     stdout.write("ARGV: " + argv + EOL);
 
     try {
         fs.accessSync(argv[0], fs.F_OK | fs.R_OK)
     } catch (e) {
-        stdout.write(['ERROR! File "', argv[0], '" either does not exist or isn\'t readable.'].join(''));
+        stderr.write(messenger.getMessage({
+            msg: 'fileNotFound',
+            fileName: argv[0]
+        }));
         process.exit();
     }
 
@@ -33,32 +57,19 @@ if (argv.length) {
         input: fs.createReadStream(argv[0]),
         terminal: false
     });
-    rl.on('line', readLineCb);
+
+    rl.on('line', function(line) {
+        stdout.write(line + EOL);
+        stdout.write(doAction(line) + EOL);
+    });
+
     rl.on('close', function() {
         console.log('== END ==: ');
         rl.close();
         process.exit();
-    })
-
-    function readLineCb(line) {
-        stdout.write(line + EOL);
-        stdout.write(doAction(line) + EOL);
-    }
+    });
 }
 
-
-stdin.on('data', function(data) {
-    var res;
-    if (data.match(/q/i))
-        process.exit();
-
-    res = doAction(data);
-    if (typeof res == 'string') {
-        stdout.write(res + EOL);
-    }
-});
-
-stdin.resume();
 
 function doAction(sCommand) {
     var res;
@@ -75,9 +86,21 @@ function doAction(sCommand) {
     } else if (sCommand.match(/^report\s*$/i)) {
         res = robot.report();
     } else {
-        res = robot.report({
+        res = new Error(messenger.getMessage({
             msg: 'unknownCommand'
-        });
+        }));
     }
     return res;
 }
+
+
+function TheToyRobotApp() {};
+TheToyRobotApp.run = function() {
+    stdout.write(messenger.getMessage({
+        msg: 'welcome'
+    }) + EOL + '> ');
+    stdin.resume();
+}
+
+
+module.exports = TheToyRobotApp;

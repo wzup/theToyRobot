@@ -1,11 +1,10 @@
 'use strict';
 
 /**
- * Let's test Messanger.
+ * Let's test Messenger.
  * We have to make sure that it returns correct messages to Robot.
  * We take messages from config.js file.
  */
-
 var Messenger = require('./../../app/messenger');
 var config = require('./../../app/config');
 
@@ -19,18 +18,19 @@ describe('The Messenger', function() {
     });
 
     /**
-     * To test each message separatly is not a good solution - it makes us to create a new it('...')
-     * everytime we have a new message.
-     * Bellow it a better loop solution.
+     * To test each message separatly is not a good solution - it makes us to
+     * manually create a new it('...') everytime we have a new message.
      */
     it('shoud output correct noInitialCommand message', function() {
         expect(messenger.getMessage({
             msg: 'noInitialCommand'
-        })).toEqual(config.messenger.oMsgs['noInitialCommand']);
+        })).toEqual(config.messenger.oMsgs[
+            'noInitialCommand']);
     });
 
     it('shoud output correct default welcome message', function() {
-        expect(messenger.getMessage()).toEqual(config.messenger.oMsgs['welcome']);
+        expect(messenger.getMessage()).toEqual(config.messenger
+            .oMsgs['welcome']);
     });
 
     it('shoud output correct default welcome message', function() {
@@ -55,37 +55,24 @@ describe('The Messenger', function() {
     })
 
     /**
-     * It is much better to test ALL messages in a loop.
-     * So that, no need to manually create a new it('...') every time we decide to have a new message.
-     * All is needed is to type a new message in a config file. It will be tested here automatically.
+     * It is much better to test ALL messages in a loop. So that, no need to
+     * manually create a new it('...') every time we decide to have a new
+     * message. All is needed is to type a new message in a config file. It will
+     * be tested here automatically.
      */
     function testItsInLoop(key) {
         it(['shoud output correct', key, 'message'].join(' '), function() {
-            // for (var key in config.messenger.oMsgs) {
-            //     expect(messenger.getMessage({
-            //         msg: key,
-            //         x: x,
-            //         y: y,
-            //         f: f
-            //     })).toEqual(messenger._constructMessage({
-            //         msg: key,
-            //         x: x,
-            //         y: y,
-            //         f: f
-            //     }));
-            // }
-            // console.log('== key ==: ', key);
-                expect(messenger.getMessage({
-                    msg: key,
-                    x: x,
-                    y: y,
-                    f: f
-                })).toEqual(messenger._constructMessage({
-                    msg: key,
-                    x: x,
-                    y: y,
-                    f: f
-                }));
+            expect(messenger.getMessage({
+                msg: key,
+                x: x,
+                y: y,
+                f: f
+            })).toEqual(messenger._constructMessage({
+                msg: key,
+                x: x,
+                y: y,
+                f: f
+            }));
 
         });
     }
@@ -94,7 +81,6 @@ describe('The Messenger', function() {
      * A loop by itself
      */
     for (var key in config.messenger.oMsgs) {
-        // console.log('== key ==: ', key);
         testItsInLoop(key);
     }
 });

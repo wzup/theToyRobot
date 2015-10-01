@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * Lets test a Robot.
+ * The largest test suit in the app.
+ */
 
 var Playground = require('./../../app/playground');
 var Messenger = require('./../../app/messenger');
@@ -30,100 +34,173 @@ describe('The Toy Robot', function() {
             oPosition.f == undefined).toBe(true);
     });
 
+    it('should report its position', function() {
+        var x = 2,
+            y = 3,
+            f = 'south';
+
+        robot.place(x, y, f);
+
+        expect(robot.report()).toEqual(messenger.getMessage({
+            msg: 'robotPosition',
+            x: x,
+            y: y,
+            f: f.toUpperCase()
+        }));
+    });
+
     it('should say "place me first to begin" at start', function() {
-        expect(robot.report()).toEqual(messenger.getMessage({msg: 'placeRobotFirst'}));
+        expect(robot.report()).toEqual(messenger.getMessage({
+            msg: 'placeRobotFirst'
+        }));
     });
 
     it('should not accept nonInt X or Y', function() {
-        var x = "foo", y = "1,4", f = "south";
-        expect(robot.place(x, y, f)).toEqual(messenger.getMessage({msg: 'nonIntCoordinates'}));
+        var x = "foo",
+            y = "1,4",
+            f = "south";
+        expect(robot.place(x, y, f)).toEqual(new TypeError(
+            messenger.getMessage({
+                msg: 'nonIntCoordinates'
+            })));
     });
 
     it('should not accept undefined FACE', function() {
-        var x = "foo", y = "1,4", f;
-        expect(robot.place(x, y, f)).toEqual(messenger.getMessage({msg: 'noFace'}));
+        var x = "foo",
+            y = "1,4",
+            f;
+        expect(robot.place(x, y, f)).toEqual(new TypeError(
+            messenger.getMessage({
+                msg: 'noFace'
+            })));
+    });
+
+    it('should not accept non-string FACE', function() {
+        var x = "foo",
+            y = "1,4",
+            f = 100;
+        expect(robot.place(x, y, f)).toEqual(new TypeError(
+            messenger.getMessage({
+                msg: 'faceNotString'
+            })));
     });
 
     it('should not accept negative Y in PLACE', function() {
-        x = 0, y = -1, f = 'south';
-        expect(robot.place(x, y, f)).toEqual(messenger.getMessage({
-            msg: 'noNegativeCoordinates'
-        }));
+        var x = 0,
+            y = -1,
+            f = 'south';
+        expect(robot.place(x, y, f)).toEqual(new TypeError(
+            messenger.getMessage({
+                msg: 'noNegativeCoordinates'
+            })));
     });
 
     it('should not accept negative X in PLACE', function() {
         x = -1, y = 0, f = 'south';
-        expect(robot.place(x, y, f)).toEqual(messenger.getMessage({
-            msg: 'noNegativeCoordinates'
-        }));
+        expect(robot.place(x, y, f)).toEqual(new TypeError(
+            messenger.getMessage({
+                msg: 'noNegativeCoordinates'
+            })));
     });
 
     it('should not accept invalid FACING words', function() {
         x = 2, y = 3, f = 'foo';
-        expect(robot.place(x, y, f)).toEqual(messenger.getMessage({
-            msg: 'wrondDirection'
-        }));
+        expect(robot.place(x, y, f)).toEqual(new TypeError(
+            messenger.getMessage({
+                msg: 'wrondDirection'
+            })));
     });
 
     it('should not be placed outside the playground', function() {
         x = 0, y = 6, f = 'north';
-        expect(robot.place(x, y, f)).toEqual(messenger.getMessage({
-            msg: 'wrongPlace'
-        }));
+        expect(robot.place(x, y, f)).toEqual(new Error(
+            messenger.getMessage({
+                msg: 'wrongPlace'
+            })));
     });
 
-    it('should have "_isFirstStepMade = false" before initial PLACE', function() {
-        expect(robot._getIsFirstStepMade()).toBe(false);
-    });
+    it('should have "_isFirstStepMade = false" before initial PLACE',
+        function() {
+            expect(robot._getIsFirstStepMade()).toBe(false);
+        }
+    );
 
-    it('should set "_isFirstStepMade = true" upon successful initial PLACE', function() {
-        var placeToX = 3,
-            placeToY = 3,
-            f = 'south';
-        robot.place(placeToX, placeToY, f);
-        expect(robot._getIsFirstStepMade()).toBe(true);
-    });
+    it(
+        'should set "_isFirstStepMade = true" upon successful initial PLACE',
+        function() {
+            var x = 3,
+                y = 3,
+                f = 'south';
+            robot.place(x, y, f);
+            expect(robot._getIsFirstStepMade()).toBe(true);
+        });
 
     it('should change X, Y upon successful place', function() {
-        var placeToX = 3,
-            placeToY = 3,
+        var x = 3,
+            y = 3,
             f = 'south',
             oPositionEnd = {};
-        robot.place(placeToX, placeToY, f);
+
+        robot.place(x, y, f);
+
         oPositionEnd = robot._getRobotPosition();
-        expect(oPositionEnd.x == placeToX &&
-            oPositionEnd.y == placeToY &&
+
+        expect(oPositionEnd.x == x &&
+            oPositionEnd.y == y &&
             oPositionEnd.f == f.toUpperCase()).toBe(true);
     });
 
-    it('should return TRUE if PLACE was successful', function() {
+    it('should return itself if PLACE was successful', function() {
         x = 1, y = 1, f = 'south';
-        expect(robot.place(x, y, f)).toBe(true);
+        expect(robot.place(x, y, f)).toEqual(robot);
     });
 
-    it('should not accept MOVE command before initial PLACE command was made', function() {
-        expect(robot.move()).toEqual(messenger.getMessage({
-            msg: 'noInitialCommand'
-        }));
-    });
+    it(
+        'should not accept MOVE command before initial PLACE command',
+        function() {
+            expect(robot.move()).toEqual(new Error(
+                messenger.getMessage({
+                    msg: 'noInitialCommand'
+                })));
+        });
+
 
     it('should not be able to step out of the playground', function() {
         var x = 4,
             y = 0,
             f = 'east';
         robot.place(x, y, f);
-        expect(robot.move()).toEqual(messenger.getMessage({
-            msg: 'wrongMove'
-        }));
+        expect(robot.move()).toEqual(new Error(
+            messenger.getMessage({
+                msg: 'wrongMove'
+            })));
     });
 
     it('should successfully make a correct MOVE', function() {
         var x = 1,
             y = 1,
-            f = 'east';
+            f = 'east',
+            pos;
         robot.place(x, y, f);
-        expect(robot.move()).toBe(true);
-        // console.log('== robot._getRobotPosition() ==: ', robot._getRobotPosition());
+        robot.move();
+        pos = robot._getRobotPosition();
+        expect(pos.x == x + 1 && pos.y == y && pos.f == f.toUpperCase())
+            .toBe(true);
+    });
+
+
+    it('should not turn RIGHT before initial PLACE was made', function() {
+        expect(robot.right()).toEqual(new Error(
+            messenger.getMessage({
+                msg: 'noInitialCommand'
+            })));
+    });
+
+    it('should not turn LEFT before initial PLACE was made', function() {
+        expect(robot.left()).toEqual(new Error(
+            messenger.getMessage({
+                msg: 'noInitialCommand'
+            })));
     });
 
     it('should turn LEFT (change face)', function() {
@@ -133,7 +210,6 @@ describe('The Toy Robot', function() {
         robot.place(x, y, f);
         robot.left()
         expect(robot._getRobotPosition().f).toEqual('WEST');
-        // console.log('== robot._getRobotPosition() LEFT ==: ', robot._getRobotPosition());
     });
 
     it('should turn RIGHT (change face)', function() {
@@ -143,50 +219,5 @@ describe('The Toy Robot', function() {
         robot.place(x, y, f);
         robot.right();
         expect(robot._getRobotPosition().f).toEqual('EAST');
-        // console.log('== robot._getRobotPosition() RIGHT ==: ', robot._getRobotPosition());
     });
-
-    it('should not accept invalid command', function() {
-        var x = 1,
-            y = 1,
-            f = 'north';
-        robot.place(x, y, f);
-        robot.right();
-        expect(robot._getRobotPosition().f).toEqual('EAST');
-        // console.log('== robot._getRobotPosition() RIGHT ==: ', robot._getRobotPosition());
-    });
-
-
-    // it('should not make a move to outside the playground', function() {
-    //     x = 5, y = 2, f = 'east',
-    //         aDirections = ['north', 'east'];
-    //     var startPointX = 0;
-    //     var startPointY = 0;
-    //     var lengthX = 5;
-    //     var lengthY = 5;
-
-    //     for (var i = 0; i < aDirections.length; i++) {
-    //         var direction = aDirections[i];
-    //         for (var m = 0; m < 5; i++) {
-    //             if (direction == 'north') {
-    //                 robot.place(m, 4, direction);
-    //                 expect(robot.move()).toEqual('Warning! You cannot move the robot that way, it can fall.');
-    //             } else if (direction == 'east') {
-    //                 robot.place(4, m, direction);
-    //                 expect(robot.move()).toEqual('Warning! You cannot move the robot that way, it can fall.');
-    //             };
-    //         }
-    //     };
-
-    //     expect(robot.place(x, y, f)).toBe(true);
-    //     expect(robot.move()).toEqual('Warning! You cannot move the robot that way, it can fall.');
-    // });
-
-    // it('should prevent robot from falling walking NORTH', function() {
-    //     robot.place(0, 5, 'north');
-    //     expect.match(robot.move());
-    // });
-
-    // it('should be square 5x5 playground', function() {
-    // });
 });

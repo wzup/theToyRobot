@@ -1,9 +1,9 @@
+'use strict';
+
 /**
  * The Toy Robot Factory
- * It constructs a robot, passing dependencie
- * ДОПИСАТЬ
+ * It constructs a robot instance, passing dependencie
  */
-
 
 var Playground = require('./playground');
 var Messenger = require('./messenger');

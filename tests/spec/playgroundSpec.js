@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- *
+ * Lets test Playground
+ * The Playgroung has only one method to test
  */
 var Playground = require('./../../app/playground');
 var config = require('./../../app/config');

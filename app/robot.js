@@ -5,7 +5,11 @@ module.exports = Robot;
 
 
 /**
- * Class Robot
+ * [Robot description]
+ * @param {[type]} config    [description]
+ * @param {[type]} playgroud [description]
+ * @param {[type]} messenger [description]
+ * @constructor
  */
 function Robot(config, playgroud, messenger) {
 
@@ -13,10 +17,9 @@ function Robot(config, playgroud, messenger) {
         this._playground = playgroud,
         this._messenger = messenger,
         this._isFirstStepMade = false,
-        // We store FACE as an int,
-        // not as a string (such as 'north', 'east', etc.)
-        // int references index in a config.aDirections array
-        // ['NORTH', 'EAST', 'SOUTH', 'WEST']
+        // We store FACE as an int, not as a string (such as 'north', 'east',
+        // etc.) int references index in a config.aDirections array ['NORTH',
+        // 'EAST', 'SOUTH', 'WEST']
         this._oCurrentPosition = {
             x: undefined,
             y: undefined,
@@ -26,100 +29,92 @@ function Robot(config, playgroud, messenger) {
 
 var prototype = {
     place: function(x, y, f) {
-        if (!f) {
-            return this.report({
-                msg: 'noFace'
-            })
+
+        var arg = {};
+
+        // Validate user input
+        try {
+            arg = this._validateInput(x, y, f);
+        } catch (e) {
+            return e;
         }
-        var _f = f.toUpperCase(),
-            _x = parseInt(x),
-            _y = parseInt(y);
-        // Only either INT or Strings that can parsed to INT
-        // are accepted as coordinatres
-        if (!Number.isInteger(_x) || !Number.isInteger(_y)) {
-            return this.report({
-                msg: 'nonIntCoordinates'
-            });
-        }
-        if (_x < 0 || _y < 0) {
-            return this.report({
-                msg: 'noNegativeCoordinates'
-            });
-        }
-        if (this._isOutOfPlayground(_x, _y)) {
-            return this.report({
+
+        // PLACE a robot only inside of playground
+        if (this._isOutOfPlayground(arg.x, arg.y)) {
+            return new Error(this._messenger.getMessage({
                 msg: 'wrongPlace'
-            });
+            }));
         }
-        if (!this._isDirectionValid(_f)) {
-            return this.report({
-                msg: 'wrondDirection'
-            });
-        }
-        this._setRobotPosition(_x, _y, _f);
+
+        // Places a robot, updates its X,Y,F
+        this._setRobotPosition(arg.x, arg.y, arg.f);
+
+        // Fix that initial PLACE has been made
         if (!this._isFirstStepMade)
             this._isFirstStepMade = true;
-        return true;
+
+        return this;
     },
     move: function() {
-        var x, y, sF, firstStep;
+        var x, y, f;
+
+        // Check if initial PLACE command was made
         if (!this._isFirstStepMade) {
-            return this.report({
+            return new Error(this._messenger.getMessage({
                 msg: 'noInitialCommand'
-            });
+            }));;
         }
-        sF = this._config.aDirections[this._oCurrentPosition.f].toUpperCase();
+
         x = this._oCurrentPosition.x;
         y = this._oCurrentPosition.y;
-        switch (sF) {
-            case this._config.aDirections[0]: // north
+        f = this._oCurrentPosition.f;
+
+        // Change X or Y correctly to
+        switch (f) {
+            case 0: // north
                 ++y;
                 break;
-            case this._config.aDirections[1]: // east
+            case 1: // east
                 ++x;
                 break;
-            case this._config.aDirections[2]: // south
+            case 2: // south
                 --y
                 break;
-            case this._config.aDirections[3]: // west
+            case 3: // west
                 --x;
                 break;
         }
+
+        // Check if the step in not outside the playground
         if (this._isOutOfPlayground(x, y)) {
-            return this.report({
+            return new Error(this._messenger.getMessage({
                 msg: 'wrongMove'
-            });
+            }));
         }
-        this._setRobotPosition(x, y, sF);
-        return true;
-        /**
-         * сделать проверку установки this._isFirstStepMade.
-         * Сначала типа false, после PLACE становится true
-         *
-         * Изменить this._oCurrentPosition на undefined для всего,
-         * покв не будет сделан первый PLACE. После него появляются
-         * реальные доступные координаты
-         */
-    },
-    left: function() {
-        if (!this._isFirstStepMade) {
-            return this.report({
-                msg: 'noInitialCommand'
-            });
-        }
-        this._oCurrentPosition.f =
-            (this._oCurrentPosition.f - 1) < 0 ?
-            3 : this._oCurrentPosition.f - 1;
+
+        this._setRobotPosition(x, y, this._config.aDirections[f]);
+
+        return this;
     },
     right: function() {
         if (!this._isFirstStepMade) {
-            return this.report({
+            return new Error(this._messenger.getMessage({
                 msg: 'noInitialCommand'
-            });
+            }));
         }
         this._oCurrentPosition.f =
             (this._oCurrentPosition.f + 1) > 3 ?
             0 : this._oCurrentPosition.f + 1;
+    },
+    left: function() {
+        if (!this._isFirstStepMade) {
+            return new Error(this._messenger.getMessage({
+                msg: 'noInitialCommand'
+            }));
+        }
+        this._oCurrentPosition.f =
+            (this._oCurrentPosition.f - 1) < 0 ?
+            3 : this._oCurrentPosition.f - 1;
     },
     report: function(msgObj) {
         // Call .report() without any parameters.
@@ -127,14 +122,14 @@ var prototype = {
             var oPosition = this._getRobotPosition();
 
             // Very beginning, no any PLACE yet, coords are undefined
-            // return a messange "PLACE a robot to begin", not coords
+            // return a message "PLACE a robot to begin", not coords
             if (oPosition.x == undefined &&
                 oPosition.y == undefined &&
                 oPosition.f == undefined) {
                 return this._messenger.getMessage({
                     msg: 'placeRobotFirst'
                 });
-                // coords are defined, return them
+                // coords are defined, return robot's position msg
             } else {
                 return this._messenger.getMessage({
                     msg: 'robotPosition',
@@ -146,6 +141,56 @@ var prototype = {
         } else
             return this._messenger.getMessage(msgObj);
     },
+
+    _validateInput: function(x, y, f) {
+
+        // FACE cannot be undefined
+        if (!f) {
+            throw new TypeError(this._messenger.getMessage({
+                msg: 'noFace'
+            }));
+        }
+
+        // FACE must be a string
+        if (typeof f !== 'string') {
+            throw new TypeError(this._messenger.getMessage({
+                msg: 'faceNotString'
+            }));
+        }
+
+        var _f = f.toUpperCase(),
+            _x = parseInt(x),
+            _y = parseInt(y);
+
+        // Only either INT or Strings that can be parsed to INT are accepted as
+        // coordinatres
+        if (!Number.isInteger(_x) || !Number.isInteger(_y)) {
+            throw new TypeError(this._messenger.getMessage({
+                msg: 'nonIntCoordinates'
+            }));
+        }
+
+        // Only positive X and Y are accepted
+        if (_x < 0 || _y < 0) {
+            throw new TypeError(this._messenger.getMessage({
+                msg: 'noNegativeCoordinates'
+            }));
+        }
+
+        // Only valid FACE words are accepted
+        // 'NORTH', 'EAST', 'SOUTH', 'WEST'
+        if (!this._isDirectionValid(_f)) {
+            throw new TypeError(this._messenger.getMessage({
+                msg: 'wrondDirection'
+            }));
+        }
+
+        return {
+            x: _x,
+            y: _y,
+            f: _f
+        };
+    },
     _isCommandValid: function() {},
     _isDirectionValid: function(face) {
         return this._config.aDirections.indexOf(face) !== -1;
@@ -154,7 +199,7 @@ var prototype = {
         this._oCurrentPosition.x = x,
             this._oCurrentPosition.y = y,
             this._oCurrentPosition.f = this._config
-            .aDirections.indexOf(f.toUpperCase());
+            .aDirections.indexOf(f);
     },
     _isOutOfPlayground: function(x, y) {
         return this._playground.isOutOfPlayground(x, y);
@@ -183,7 +228,15 @@ var prototype = {
     },
     _setIsFirstStepMade: function(val) {
         this._isFirstStepMade = val;
-    }
+    },
+    /**
+     * Get Messenger instance
+     * @return {Messenger} messenger instance
+     * @public
+     */
+    getMessenger: function() {
+        return this._messenger;
+    },
 
 }
 

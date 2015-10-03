@@ -23,19 +23,19 @@ argv = process.argv.slice(2);
 
 
 stdin.on('data', function(data) {
-    var res, _data = data.trim();
-    if (_data.match(/(q|quit|exit)/i))
-        process.exit();
+    // var res, _data = data.trim();
+    // if (_data.match(/(q|quit|exit)/i))
+    //     process.exit();
 
-    res = doAction(_data);
-    if (res instanceof Error) {
-        stderr.write(res.message + EOL + '> ');
-    } else if (typeof res == 'string') {
-        stdout.write(res + EOL + '> ');
-    }
-    else {
-        stdout.write('> ');
-    }
+    // res = doAction(_data);
+    // if (res instanceof Error) {
+    //     stderr.write(res.message + EOL + '> ');
+    // } else if (typeof res == 'string') {
+    //     stdout.write(res + EOL + '> ');
+    // } else {
+    //     stdout.write('> ');
+    // }
+    doOutput(data);
 });
 
 
@@ -60,7 +60,20 @@ if (argv.length) {
 
     rl.on('line', function(line) {
         stdout.write(line + EOL);
-        stdout.write(doAction(line) + EOL);
+
+        // var res, _line = line.trim();
+        // res = doAction(_line);
+        // if (res instanceof Error) {
+        //     stderr.write(res.message + EOL + '> ');
+        // } else if (typeof res == 'string') {
+        //     stdout.write(res + EOL + '> ');
+        // } else {
+        //     stdout.write('> ');
+        // }
+
+        doOutput(line);
+
+        // stdout.write(doAction(line) + EOL);
     });
 
     rl.on('close', function() {
@@ -93,11 +106,27 @@ function doAction(sCommand) {
     return res;
 }
 
+function doOutput(data) {
+    var res, _data = data.trim();
+
+    if (_data.match(/(q|quit|exit)/i))
+        process.exit();
+
+    res = doAction(_data);
+    if (res instanceof Error) {
+        stderr.write(res.message + EOL + '> ');
+    } else if (typeof res == 'string') {
+        stdout.write(res + EOL + '> ');
+    } else {
+        stdout.write('> ');
+    }
+}
 
 function TheToyRobotApp() {};
 TheToyRobotApp.run = function() {
     stdout.write(messenger.getMessage({
-        msg: 'welcome'
+        msg: 'welcome',
+        eol: EOL
     }) + EOL + '> ');
     stdin.resume();
 }

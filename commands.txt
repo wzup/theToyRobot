@@ -1,3 +1,6 @@
-place 6,1,north
-report
-place 5 5 south
+PLACE 0,0,NORTH 
+MOVE 
+REPORT 
+LEFT 
+MOVE 
+REPORT 

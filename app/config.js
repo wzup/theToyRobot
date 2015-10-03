@@ -39,7 +39,7 @@ config.messenger = {
         default: 'Welcome to The Toy Robot game. Start with placing a robot typing PLACE X, Y, F.',
         someCombinedMsg: 'For the {s} of testing: PLACE {x}, {y}, {z} in {country}',
         fileNotFound: 'Error! File \'{fileName}\' was not found. Make sure you specified its path correctly.',
-        welcome: 'Welcome! Tell the Robot your first command. Begin by placing the Robot on the playground - PLACE X, Y, F.',
+        welcome: 'Welcome!{eol}Tell the Robot your first command. Begin by placing the Robot on the playground - PLACE X, Y, F. \'q\' to exit.',
     },
     oSubs: {
         availableDirections: config.robot.aDirections.join(', '),

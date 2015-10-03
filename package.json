@@ -4,7 +4,8 @@
     "description": "The Toy Robot is a test task for the Lookahead.com.au company.",
     "main": "index.js",
     "scripts": {
-        "test": "protractor"
+        "test": "jasmine tests/spec/support/jasmine.json",
+        "start": "node start.js"
     },
     "keywords": [
         "lookahead.com.au",
